@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Filming | Gifting Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
+            color: #e2e8f0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+        }
+
+        .gradient-border {
+            border-image: linear-gradient(to right, #ef4444, #3b82f6) 1;
+        }
+
+        .active-tab {
+            color: #ef4444 !important;
+            border-bottom: 2px solid #ef4444;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 10px;
+        }
+
+        /* Animation for notifications */
+        @keyframes slideIn {
+            from { transform: translate(-50%, 100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .animate-slide-in {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-24">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 glass-card border-b border-slate-800 px-4 py-3">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="bg-red-600 p-2 rounded-lg shadow-lg shadow-red-900/20">
+                    <i class="fab fa-youtube text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-white text-sm md:text-base leading-none">ACTIVE FILMING</h1>
+                    <p class="text-[10px] text-slate-500 font-semibold tracking-tighter">OFFICIAL PROMOTION HUB</p>
+                </div>
+            </div>
+            <div class="flex gap-6">
+                <button onclick="switchTab('browse')" id="tab-browse" class="text-xs md:text-sm font-bold text-slate-400 transition-all py-1 active-tab">ITEMS</button>
+                <button onclick="switchTab('history')" id="tab-history" class="text-xs md:text-sm font-bold text-slate-400 transition-all py-1">MY GRANTS</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-4 mt-4">
+        
+        <!-- Header / Camera Trigger -->
+        <section class="mb-8">
+            <div class="relative overflow-hidden rounded-3xl p-6 md:p-10 border border-slate-800 bg-gradient-to-br from-slate-900 to-black">
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <span class="inline-block px-3 py-1 bg-red-600 text-[10px] font-bold rounded-full mb-3 animate-pulse">LIVE GIVEAWAY</span>
+                        <h2 class="text-2xl md:text-4xl font-extrabold text-white mb-2">Promotion & Serving Content</h2>
+                        <p class="text-slate-400 max-w-lg text-sm md:text-base">Take a live photo to verify your active viewership and unlock your 10-item mail order grant.</p>
+                    </div>
+                    <button onclick="openCamera()" class="flex items-center justify-center gap-3 bg-white text-black hover:bg-slate-200 px-8 py-4 rounded-2xl font-bold transition-transform active:scale-95 shadow-xl">
+                        <i class="fas fa-camera"></i>
+                        VERIFY & WIN
+                    </button>
+                </div>
+                <!-- Abstract bg element -->
+                <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-red-600/10 rounded-full blur-3xl"></div>
+            </div>
+        </section>
+
+        <!-- Browser Section -->
+        <section id="section-browse">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="items-container">
+                <!-- Items injected here by JS -->
+            </div>
+        </section>
+
+        <!-- History Section -->
+        <section id="section-history" class="hidden">
+            <div class="flex justify-between items-end mb-6">
+                <h3 class="text-2xl font-bold text-white">Your Item Grants</h3>
+                <button onclick="clearHistory()" class="text-xs text-slate-500 hover:text-red-400 transition-colors">
+                    <i class="fas fa-trash-alt mr-1"></i> Clear Local Storage
+                </button>
+            </div>
+            <div id="history-container" class="space-y-4">
+                <!-- History injected here -->
+            </div>
+        </section>
+
+        <!-- Camera Overlay -->
+        <div id="camera-modal" class="fixed inset-0 z-[100] bg-black hidden flex-col items-center justify-center p-4">
+            <div class="w-full max-w-md">
+                <div class="relative rounded-3xl overflow-hidden bg-slate-900 aspect-[3/4] shadow-2xl border-2 border-slate-800">
+                    <video id="video" autoplay playsinline class="w-full h-full object-cover"></video>
+                    <canvas id="canvas" class="hidden"></canvas>
+                    <div id="photo-preview" class="absolute inset-0 hidden">
+                        <img id="captured-image" class="w-full h-full object-cover">
+                    </div>
+                    <!-- Viewfinder -->
+                    <div id="viewfinder" class="absolute inset-0 border-[40px] border-black/40 pointer-events-none flex items-center justify-center">
+                        <div class="w-full h-full border border-white/20 rounded-xl"></div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex justify-center gap-4">
+                    <button onclick="closeCamera()" class="bg-slate-800 text-white p-4 rounded-full w-16 h-16 flex items-center justify-center">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <button id="capture-btn" onclick="takePhoto()" class="bg-white text-black p-4 rounded-full w-16 h-16 flex items-center justify-center shadow-lg">
+                        <i class="fas fa-circle text-2xl"></i>
+                    </button>
+                    <button id="save-btn" onclick="confirmPhoto()" class="bg-green-600 text-white p-4 rounded-full w-16 h-16 hidden flex items-center justify-center shadow-lg">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="fixed bottom-24 left-1/2 -translate-x-1/2 glass-card border-red-500/50 px-6 py-3 rounded-2xl shadow-2xl hidden z-[200] animate-slide-in">
+        <p id="notif-text" class="text-sm font-bold text-white"></p>
+    </div>
+
+    <footer class="fixed bottom-0 left-0 right-0 glass-card p-4 text-center border-t border-slate-800">
+        <p class="text-[10px] tracking-widest text-slate-500 font-bold uppercase">
+            © 2024 ACTIVE FILMING • CHANNEL-ONLY ACCESS
+        </p>
+    </footer>
+
+    <script>
+        // State Management
+        let currentVerificationPhoto = null;
+        let history = JSON.parse(localStorage.getItem('gifting_history') || '[]');
+        const ITEMS_COUNT = 10;
+        
+        const mockItems = Array.from({ length: ITEMS_COUNT }).map((_, i) => ({
+            id: i + 1,
+            name: `Channel Item #${i + 1}`,
+            desc: `Promotional content gift for active viewers. Standard mail order grant.`,
+            img: `https://picsum.photos/seed/gift${i+5}/400/300`
+        }));
+
+        // Initial Render
+        function init() {
+            renderItems();
+            renderHistory();
+        }
+
+        function renderItems() {
+            const container = document.getElementById('items-container');
+            container.innerHTML = mockItems.map(item => `
+                <div class="glass-card rounded-3xl overflow-hidden group">
+                    <div class="h-48 overflow-hidden relative">
+                        <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        <div class="absolute top-3 right-3 bg-black/60 backdrop-blur px-2 py-1 rounded-lg text-[10px] font-bold text-white">
+                            ID: ${item.id}
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <h4 class="text-white font-bold mb-1">${item.name}</h4>
+                        <p class="text-slate-400 text-xs mb-4">${item.desc}</p>
+                        <button onclick="claimItem(${item.id})" class="w-full bg-red-600/10 hover:bg-red-600 border border-red-600/20 text-red-500 hover:text-white py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+                            <i class="fas fa-gift"></i> CLAIM GRANT
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-container');
+            if (history.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-20 border-2 border-dashed border-slate-800 rounded-3xl">
+                        <i class="fas fa-box-open text-slate-700 text-4xl mb-4"></i>
+                        <p class="text-slate-500 font-medium">No grants processed yet.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = history.map(entry => `
+                <div class="glass-card p-4 rounded-2xl flex items-center gap-4">
+                    <img src="${entry.photo}" class="w-20 h-20 rounded-xl object-cover border border-slate-700">
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-start">
+                            <h5 class="text-white font-bold text-sm">${entry.itemName}</h5>
+                            <span class="text-[10px] text-slate-500 font-mono">${entry.date}</span>
+                        </div>
+                        <p class="text-[10px] text-green-500 font-bold mt-1">
+                            <i class="fas fa-check-circle mr-1"></i> VERIFIED MAIL ORDER
+                        </p>
+                        <div class="mt-2 flex items-center gap-2">
+                            <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded">ID: ${entry.tracking}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Logic
+        function switchTab(tab) {
+            document.getElementById('section-browse').classList.toggle('hidden', tab !== 'browse');
+            document.getElementById('section-history').classList.toggle('hidden', tab !== 'history');
+            document.getElementById('tab-browse').classList.toggle('active-tab', tab === 'browse');
+            document.getElementById('tab-history').classList.toggle('active-tab', tab === 'history');
+        }
+
+        function showNotification(text) {
+            const el = document.getElementById('notification');
+            document.getElementById('notif-text').innerText = text;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 3000);
+        }
+
+        async function openCamera() {
+            const modal = document.getElementById('camera-modal');
+            const video = document.getElementById('video');
+            modal.classList.remove('hidden');
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user' }, 
+                    audio: false 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                showNotification("Camera Error: Access Denied");
+                modal.classList.add('hidden');
+            }
+        }
+
+        function closeCamera() {
+            const video = document.getElementById('video');
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('camera-modal').classList.add('hidden');
+            document.getElementById('photo-preview').classList.add('hidden');
+            document.getElementById('capture-btn').classList.remove('hidden');
+            document.getElementById('save-btn').classList.add('hidden');
+            document.getElementById('viewfinder').classList.remove('hidden');
+        }
+
+        function takePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const preview = document.getElementById('photo-preview');
+            const img = document.getElementById('captured-image');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            const data = canvas.toDataURL('image/jpeg');
+            img.src = data;
+            currentVerificationPhoto = data;
+
+            preview.classList.remove('hidden');
+            document.getElementById('capture-btn').classList.add('hidden');
+            document.getElementById('save-btn').classList.remove('hidden');
+            document.getElementById('viewfinder').classList.add('hidden');
+        }
+
+        function confirmPhoto() {
+            showNotification("Verification Success! Now claim an item.");
+            closeCamera();
+        }
+
+        function claimItem(id) {
+            if (!currentVerificationPhoto) {
+                showNotification("Please take a verification photo first!");
+                openCamera();
+                return;
+            }
+
+            const item = mockItems.find(i => i.id === id);
+            const newGrant = {
+                itemName: item.name,
+                photo: currentVerificationPhoto,
+                date: new Date().toLocaleDateString(),
+                tracking: 'AF-' + Math.random().toString(36).substr(2, 8).toUpperCase()
+            };
+
+            history.unshift(newGrant);
+            localStorage.setItem('gifting_history', JSON.stringify(history));
+            
+            showNotification("Grant Sent! Check 'My Grants'");
+            renderHistory();
+            currentVerificationPhoto = null; // Reset for next claim
+        }
+
+        function clearHistory() {
+            if (confirm("Clear all your gift history?")) {
+                history = [];
+                localStorage.removeItem('gifting_history');
+                renderHistory();
+            }
+        }
+
+        // Run
+        init();
+    </script>
+</body>
+</html>
+
